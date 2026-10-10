@@ -1,0 +1,18 @@
+# systemd unit for the BinVision backend. __APP_DIR__ and __APP_USER__ are filled in by ec2_deploy.sh.
+[Unit]
+Description=BinVision FastAPI backend
+After=network.target
+
+[Service]
+Type=simple
+User=__APP_USER__
+WorkingDirectory=__APP_DIR__/backend
+EnvironmentFile=__APP_DIR__/backend/.env
+ExecStart=__APP_DIR__/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
