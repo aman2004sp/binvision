@@ -6,8 +6,8 @@ on:
     branches:
       - main
     paths:
-      - "frontend/**"
-      - ".github/workflows/deploy-pages.yml"
+      - "binvision/frontend/**"
+      - "binvision/.github/workflows/**"
   workflow_dispatch:
 
 permissions:
@@ -20,24 +20,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: binvision/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: binvision/frontend
+        run: npm ci
+
+      - name: Build frontend for GitHub Pages
+        working-directory: binvision/frontend
+        run: npm run build -- --base=/binvision/
+
+      - name: Add SPA fallback
+        working-directory: binvision/frontend
+        run: cp dist/index.html dist/404.html
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload frontend
+      - name: Upload production build
         uses: actions/upload-pages-artifact@v3
         with:
-          path: frontend
+          path: binvision/frontend/dist
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        
